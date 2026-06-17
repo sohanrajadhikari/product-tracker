@@ -2,6 +2,7 @@ from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 import re
 from bs4 import BeautifulSoup
+import time
 
 def clean_daraz_url(url: str) -> str:
     match = re.match(
@@ -14,6 +15,47 @@ def clean_daraz_url(url: str) -> str:
     return match.group(1)
 
 
+def fetch_item(url, page):
+    try:
+        page.goto(url, wait_until="networkidle", timeout=50000)
+
+        while page.locator("div.count").count() == 0:
+            page.mouse.wheel(0, 500)
+            page.wait_for_timeout(500)
+
+
+        html = page.content()
+        soup = BeautifulSoup(html, 'html.parser')
+        
+        title = soup.find("h1", class_="pdp-mod-product-badge-title").get_text(strip=True)
+        
+        string_price = soup.find("span", class_="pdp-price_type_normal").get_text()
+        match = re.search(r'[\d,]+', string_price)
+        price = int(match.group().replace(',', '')) if match else None
+
+        rating = soup.find("span", class_="score-average").get_text()
+
+        count = soup.find("div", class_="count").get_text()
+        match = re.search(r"\d+", count)
+        reviews_count = match.group() if match else None
+
+        items = {
+            "name" : title,
+            "price" : price,
+            "rating" : rating,
+            "reviews" : reviews_count,
+            "url" : url
+        }
+        print(title, price, rating, reviews_count, url)
+        return items
+    except Exception as e:
+        print(f"Error : {e}")
+        return None
+
+
+
+
+
 def track_new():
     url = input("Enter the url of the product you wnat to track: ")
     try:
@@ -23,26 +65,12 @@ def track_new():
     else:
         with Stealth().use_sync(sync_playwright()) as playwright:
             browser = playwright.chromium.launch(headless=True)
-            context = browser
+            context = browser.new_context()
 
             page = context.new_page()
-
-            try:
-                page.goto(url, wait_until="networkidle")
-
-                html = page.content()
-
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                title = soup.find("h1", class_="pdp-mod-product-badge-title").get_text(strip=True)
-                
-                string_price = soup.find("span", class_="pdp-price_type_normal").get_text(strip=True)
-                match = re.search(r'(\d+)', string_price)
-                price = int(match.group(1)) if match else None
-
-
-                print(title, price)
-                return
-            except Exception as e:
-                print(f"Error : {e}")
-                return
+            product = fetch_item(url, page)
+            if product is None:
+                print("Error in fetching.")
+            else:
+                print(product)
+            
