@@ -16,9 +16,11 @@ if __name__ == '__main__':
             helper.track_new()
         # case 2:
         #     print('Update prices of tracked products.')
-        #     update_prices()
+        #     helper.update_prices()
         # case 3:
         #     print('List all products.')
-        #     list_products()
+        #     helper.list_products()
         case _:
+
+
             print('Something went wrong while handling modes.')

@@ -43,7 +43,7 @@ def fetch_item(url, page):
             "name" : title,
             "price" : price,
             "rating" : rating,
-            "reviews" : reviews_count,
+            "reviews_count" : reviews_count,
             "url" : url
         }
         print(title, price, rating, reviews_count, url)
