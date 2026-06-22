@@ -1,0 +1,4 @@
+playwright
+playwright_stealth
+requests
+bs4
